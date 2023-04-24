@@ -34,7 +34,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 rotateYmatrix = MakeRotateYMatrix(rotate.y);
 		Matrix4x4 rotateZmatrix = MakeRotateZMatrix(rotate.z);
 
-		Matrix4x4 rotateXYZMatrix = MakeRotateXYZMatrix(rotate.x, rotate.y, rotate.z);
+		Matrix4x4 rotateXYZMatrix = MakeRotateXYZMatrix(rotate);
 
 		///
 		/// ↑更新処理ここまで
