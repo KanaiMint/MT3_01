@@ -5,6 +5,11 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT3_01", "MT3_01.vcxproj", "{D8F07BA1-9E2D-41B8-ADC1-D2C9D5D1D3D4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{5F84DA43-D6D2-44D3-BFE4-ACB4164D6AC8}"
+	ProjectSection(SolutionItems) = preProject
+		Matrix4x4.cpp = Matrix4x4.cpp
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
