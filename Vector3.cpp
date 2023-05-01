@@ -54,6 +54,15 @@ Vector3 Vector3::Normalize(const Vector3& v)
 	return Vector3(temp);
 }
 
+Vector3 Vector3::Cross(const Vector3& v1, const Vector3& v2)
+{
+	Vector3 tmp;
+	tmp.x = (v1.y * v2.z) - (v1.z * v2.y);
+	tmp.y = (v1.z * v2.x) - (v1.x * v2.z);
+	tmp.z = (v1.x * v2.y) - (v1.y * v2.x);
+	return Vector3(tmp);
+}
+
 
 void VecScreenPrintf(int x, int y, const Vector3& vector, const char* label)
 {
