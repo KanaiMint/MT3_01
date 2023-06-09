@@ -138,7 +138,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 point{ -1.5f,0.6f,0.6f };
 	/*float rot = 0.0f;*/
 
-	
+	int color = WHITE;
+
+
+	Sphere sphere1{ {0.0f,0.0f,0.0f},0.3f };
+	Sphere sphere2{ {0.0f,0.0f,0.0f},0.3f };
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -171,6 +175,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Sphere pointSphere{ point,0.01f };
 		Sphere clossPointSphere{closestPoint,0.01f};
 
+		
+
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.3f,0.0f,0.0f }, cameraTranslate);
 		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -182,12 +188,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+		ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
 		ImGui::End();
 
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Vector3::Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
-
+		//2つの球の中心点間の距離を求める	
+		float distance = sphere1.center.Length( sphere2.center );
+		//半径の合計よりも短かったら衝突	
+		if (distance <= sphere1.radius + sphere2.radius) {
+			color =RED;
+		}
+		else {
+			color = WHITE;
+		}
 		///
 		/// ↑更新処理ここまで
 		///
@@ -195,14 +211,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		//DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
-		Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y),WHITE);
+		/*Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y),WHITE);
 
 		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
-		
-		
+		*/
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
+
 
 		///
 		/// ↑描画処理ここまで
