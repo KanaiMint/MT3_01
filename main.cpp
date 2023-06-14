@@ -117,8 +117,53 @@ Vector3 ClossPoint(const Vector3& point, const Segment& segment) {
 	//tmp = Projection(Vector3::Subtract(point,segment.origin),segment.diff);
 	return tmp;
 }
+//平面
+struct Plane {
+	Vector3 normal;//法線
+	float distance;//距離
+};
 
+bool Iscollision(const Sphere& sphere, const Plane& plane) {
+	
+	
+	float k = Vector3::Dot(plane.normal, sphere.center) - plane.distance;
 
+	if (std::abs(k) <=sphere.radius) {
+		return true;
+	}
+	return false;
+
+		//k=N・spherecenter-d;
+}
+Vector3 Perpendicular(const Vector3& vector) {
+	if (vector.x != 0.0f || vector.y != 0.0f) {
+		return { -vector.y,vector.x,0.0f };
+	}
+	return { 0.0f,-vector.z,vector.y };
+}
+
+//平面描画
+void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+
+	Vector3 center =Vector3::Multiply(plane.distance, plane.normal);//1
+	Vector3 perpendiculars[4];
+	perpendiculars[0] = Vector3::Normalize(Perpendicular(plane.normal));//2
+	perpendiculars[1] = { -perpendiculars[0].x,-perpendiculars[0].y,-perpendiculars[0].z };//3
+	perpendiculars[2] = Vector3::Cross(plane.normal, perpendiculars[0]);//4
+	perpendiculars[3] = { -perpendiculars[2].x,-perpendiculars[2].y,-perpendiculars[2].z };
+	//6
+	Vector3 points[4];
+	for (int32_t index = 0; index < 4; ++index) {
+		Vector3 extend =Vector3::Multiply(2.0f, perpendiculars[index]);
+		Vector3 point = Vector3::Add(center, extend);
+		points[index] = Transform(Transform(point, viewProjectionMatrix), viewportMatrix);
+	}
+	//pointsをそれぞれ結んでDrawLineで矩形を描画する。DrawTringleを使って塗りつぶしてもいいが、DepthがないのでMT3ではわかりずらい
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
+	Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[2].x, (int)points[2].y, color);
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[3].x, (int)points[3].y,color);
+	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[1].x, (int)points[1].y, color);
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -144,6 +189,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Sphere sphere1{ {0.0f,0.0f,0.0f},0.3f };
 	Sphere sphere2{ {0.0f,0.0f,0.0f},0.3f };
 
+	Plane plane1{ {0.0f,1.0f,0.0f},0.1f };
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -189,17 +235,26 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 		ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
-		ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
+		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
+		ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
+		ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
 		ImGui::End();
 
 		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		Vector3 end = Transform(Transform(Vector3::Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
 		//2つの球の中心点間の距離を求める	
-		float distance = sphere1.center.Length( sphere2.center );
+		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		if (distance <= sphere1.radius + sphere2.radius) {
+		/*if (distance <= sphere1.radius + sphere2.radius) {
 			color =RED;
+		}
+		else {
+			color = WHITE;
+		}*/
+
+		if (Iscollision(sphere1, plane1)==true) {
+			color = RED;
 		}
 		else {
 			color = WHITE;
@@ -219,9 +274,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		*/
 		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
 
-
+		DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
 		///
 		/// ↑描画処理ここまで
 		///
