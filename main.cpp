@@ -135,6 +135,72 @@ bool Iscollision(const Sphere& sphere, const Plane& plane) {
 
 		//k=N・spherecenter-d;
 }
+bool IsCollision(const Line& line, const Plane& plane) {
+	//float tmp = plane.distance - (Vector3::Dot(line.origin, plane.normal));
+	float tmp2 = Vector3::Dot(plane.normal, line.diff);
+	//float T = tmp / tmp2;
+
+	if (tmp2 == 0.0f) {
+		return false;
+	}
+	else {
+		//if (T >= 0.0f && T <= 1.0f) {
+		//	return true;//線分と無限平面の当たり判定
+		//}
+		//if (T > 0.0f) {
+		//	return true;//半直線と無限平面当たり判定
+		//}
+		//if (T > 0.0f) {
+		//	return true;
+		//}
+		return true;
+	}
+}
+bool IsCollision(const Segment& segment, const Plane& plane) {
+	float tmp = plane.distance - (Vector3::Dot(segment.origin, plane.normal));
+	float tmp2 = Vector3::Dot(plane.normal, segment.diff);
+	float T = tmp / tmp2;
+
+	if (tmp2 == 0.0f) {
+		return false;
+	}
+	else {
+		if (T >= 0.0f && T <= 1.0f) {
+			return true;//線分と無限平面の当たり判定
+		}
+		//if (T > 0.0f) {
+		//	return true;//半直線と無限平面当たり判定
+		//}
+		//if (T > 0.0f) {
+		//	return true;
+		//}
+		
+	}
+	return false;
+}
+bool IsCollision(const Ray& ray, const Plane& plane) {
+	float tmp = plane.distance - (Vector3::Dot(ray.origin, plane.normal));
+	float tmp2 = Vector3::Dot(plane.normal, ray.diff);
+	float T = tmp / tmp2;
+
+	if (tmp2 == 0.0f) {
+		return false;
+	}
+	else {
+		//if (T >= 0.0f && T <= 1.0f) {
+		//	return true;//線分と無限平面の当たり判定
+		//}
+		if (T > 0.0f) {
+			return true;//半直線と無限平面当たり判定
+		}
+		//if (T > 0.0f) {
+		//	return true;
+		//}
+
+	}
+	return false;
+}
+
 Vector3 Perpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
 		return { -vector.y,vector.x,0.0f };
@@ -142,6 +208,13 @@ Vector3 Perpendicular(const Vector3& vector) {
 	return { 0.0f,-vector.z,vector.y };
 }
 
+void DrawLine(const Segment& segment, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 start = Transform(Transform(segment.origin, viewProjectionMatrix), viewportMatrix);
+	Vector3 end = Transform(Transform(Vector3::Add(segment.origin, segment.diff), viewProjectionMatrix), viewportMatrix);
+
+	Novice::DrawLine((int)start.x, (int)start.y, (int)end.x, (int)end.y, color);
+
+}
 //平面描画
 void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 
@@ -234,31 +307,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
-		ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
+		//ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
 		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
 		ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
 		ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
+		ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
+
 		ImGui::End();
 
-		Vector3 start = Transform(Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
-		Vector3 end = Transform(Transform(Vector3::Add(segment.origin, segment.diff), worldViewProjectionMatrix), viewportMatrix);
-
+		
 		//2つの球の中心点間の距離を求める	
 		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		/*if (distance <= sphere1.radius + sphere2.radius) {
-			color =RED;
-		}
-		else {
-			color = WHITE;
-		}*/
-
-		if (Iscollision(sphere1, plane1)==true) {
+		if (IsCollision(segment, plane1) == true) {
 			color = RED;
 		}
 		else {
 			color = WHITE;
 		}
+
+		
 		///
 		/// ↑更新処理ここまで
 		///
@@ -268,12 +337,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
-		/*Novice::DrawLine(int(start.x), int(start.y), int(end.x), int(end.y),WHITE);
-
+		DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
+		/*
 		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		*/
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
 
 		DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
