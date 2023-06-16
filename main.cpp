@@ -238,6 +238,66 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[1].x, (int)points[1].y, color);
 }
 
+//三角形
+struct Triangle {
+	Vector3 vertices[3];//頂点
+};
+bool IsCollision(const Triangle& triangle, const Segment& segment) {
+
+	Vector3 v01 = Vector3::Subtract(triangle.vertices[0], triangle.vertices[1]);
+	Vector3 v12 = Vector3::Subtract(triangle.vertices[1], triangle.vertices[2]);
+	Vector3 normal =Vector3::Normalize( Vector3::Cross(v01, v12));//三角形の法線
+	
+	float distance= Vector3::Dot(triangle.vertices[0], normal);
+	Plane plane(normal, distance);
+
+	if (IsCollision(segment, plane)) {
+
+		float tmp = plane.distance - (Vector3::Dot(segment.origin, plane.normal));
+		float tmp2 = Vector3::Dot(plane.normal, segment.diff);
+		float T = tmp / tmp2;
+
+		Vector3 P =Vector3::Add( segment.origin ,Vector3::Multiply( T ,segment.diff));
+
+	//	Vector3 P = o + tb;
+
+		//各辺を結んだベクトルと、頂点と衝突店ｐを結んだベクトルのクロス石器をとる
+		Vector3 cross01 = Vector3::Cross(Vector3::Subtract(triangle.vertices[0], triangle.vertices[1]), Vector3::Subtract(triangle.vertices[1], P));
+		Vector3 cross12 = Vector3::Cross(Vector3::Subtract(triangle.vertices[1], triangle.vertices[2]), Vector3::Subtract(triangle.vertices[2], P));
+		Vector3 cross20 = Vector3::Cross(Vector3::Subtract(triangle.vertices[2], triangle.vertices[0]), Vector3::Subtract(triangle.vertices[0], P));
+
+
+
+		if (Vector3::Dot(cross01, normal) >= 0.0f &&
+			Vector3::Dot(cross12, normal) >= 0.0f &&
+			Vector3::Dot(cross20, normal) >= 0.0f) {
+
+			return true;
+
+		}
+		return false;
+	}
+	return false;
+
+}
+
+void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+
+	Vector3 v01 = Vector3::Subtract(triangle.vertices[0], triangle.vertices[1]);
+	Vector3 v12 = Vector3::Subtract(triangle.vertices[1], triangle.vertices[2]);
+	Vector3 v20 = Vector3::Subtract(triangle.vertices[2], triangle.vertices[0]);
+
+
+	Vector3 start1 = Transform(Transform(triangle.vertices[0], viewProjectionMatrix), viewportMatrix);
+	Vector3 start2 = Transform(Transform(triangle.vertices[1], viewProjectionMatrix), viewportMatrix);
+	Vector3 start3 = Transform(Transform(triangle.vertices[2], viewProjectionMatrix), viewportMatrix);
+
+	Novice::DrawLine((int)start1.x, (int)start1.y, (int)start2.x, (int)start2.y, color);
+	Novice::DrawLine((int)start2.x, (int)start2.y, (int)start3.x, (int)start3.y, color);
+	Novice::DrawLine((int)start3.x, (int)start3.y, (int)start1.x, (int)start1.y, color);
+
+}
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -263,6 +323,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Sphere sphere2{ {0.0f,0.0f,0.0f},0.3f };
 
 	Plane plane1{ {0.0f,1.0f,0.0f},0.1f };
+	Triangle triangle{
+		{
+		{-1.0f,0.0f,0.0f},
+		{0.0f,1.0f,0.0f},
+		{1.0f,0.0f,0.0f}
+		}
+	};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -309,10 +376,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
 		//ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
 		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
-		ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
-		ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
+		//ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
+		//ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
 		ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
 		ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
+		ImGui::DragFloat3("Triangle", &triangle.vertices[0].x, 0.01f);
+		
 
 		ImGui::End();
 
@@ -320,7 +389,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//2つの球の中心点間の距離を求める	
 		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		if (IsCollision(segment, plane1) == true) {
+		if (IsCollision(triangle,segment) == true) {
 			color = RED;
 		}
 		else {
@@ -344,8 +413,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		*/
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
-
-		DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
 		///
 		/// ↑描画処理ここまで
 		///
