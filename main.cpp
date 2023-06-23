@@ -3,7 +3,7 @@
 #include "Matrix4x4.h"
 #include<cmath>
 #include<imgui.h>
-
+#include<algorithm>
 const char kWindowTitle[] = "LD2A_カナイ_ミント";
 
 static float M_PI=(float)3.14159265358979323846;
@@ -346,6 +346,23 @@ void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Mat
 	Novice::DrawLine((int)back[0].x, (int)back[0].y, (int)back[3].x, (int)back[3].y, color);
 
 }
+bool IsCollision(const AABB& aabb, const Sphere& sphere) {
+
+	//最近接点を求める
+	Vector3 closesPoint(std::clamp(sphere.center.x, aabb.min.x, aabb.max.x),
+		std::clamp(sphere.center.y, aabb.min.y, aabb.max.y),
+		std::clamp(sphere.center.z, aabb.min.z, aabb.max.z));
+
+	//最近接点と球の中心との距離を求める
+	float distance =Vector3::Length(Vector3::Subtract(closesPoint,sphere.center));
+	//距離が半径より小さければ衝突
+	if (distance <= sphere.radius) {
+		return true;
+	}
+	return false;
+}
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -431,7 +448,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
-		//ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
 		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
 		//ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
 		//ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
@@ -440,8 +457,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//ImGui::DragFloat3("Triangle", &triangle.vertices[0].x, 0.01f);
 		ImGui::DragFloat3("AABB1", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1", &aabb1.max.x, 0.01f);
-		ImGui::DragFloat3("AABB2", &aabb2.min.x, 0.01f);
-		ImGui::DragFloat3("AABB2", &aabb2.max.x, 0.01f);
+		//ImGui::DragFloat3("AABB2", &aabb2.min.x, 0.01f);
+		//ImGui::DragFloat3("AABB2", &aabb2.max.x, 0.01f);
 
 
 		ImGui::End();
@@ -450,7 +467,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//2つの球の中心点間の距離を求める	
 		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		if (IsCollision(aabb1,aabb2) == true) {
+		if (IsCollision(aabb1,sphere1) == true) {
 			color = RED;
 		}
 		else {
@@ -468,13 +485,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
 		//DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
-		/*
-		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
+		
+		/*DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		*/
 		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, color);
-		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
