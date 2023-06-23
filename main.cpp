@@ -249,6 +249,7 @@ bool IsCollision(const Triangle& triangle, const Segment& segment) {
 	Vector3 normal =Vector3::Normalize( Vector3::Cross(v01, v12));//三角形の法線
 	
 	float distance= Vector3::Dot(triangle.vertices[0], normal);
+
 	Plane plane(normal, distance);
 
 	if (IsCollision(segment, plane)) {
@@ -280,7 +281,6 @@ bool IsCollision(const Triangle& triangle, const Segment& segment) {
 	return false;
 
 }
-
 void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 
 	Vector3 v01 = Vector3::Subtract(triangle.vertices[0], triangle.vertices[1]);
@@ -298,6 +298,54 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 
 }
 
+struct AABB {
+	Vector3 min;//最小店
+	Vector3 max;//最大店
+};
+
+bool IsCollision(const AABB& a, const AABB& b) {
+	if((a.min.x<=b.max.x&&a.max.x>=b.min.x)&&
+		(a.min.y <= b.max.y && a.max.y >= b.min.y) &&
+		(a.min.z <= b.max.z && a.max.z >= b.min.z) ){
+
+		return true;
+	}
+	return false;
+}
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+
+	Vector3 min = aabb.min;
+	Vector3 max = aabb.max;
+	 
+	Vector3 front[] = {
+		{min.x,min.y,min.z},//LB
+		{min.x,max.y,min.z},//LT
+		{max.x,max.y,min.z},//RT
+		{max.x,min.y,min.z},//RB
+	};
+	Vector3 back[] = {
+		{min.x,min.y,max.z},//LB
+		{min.x,max.y,max.z},//LT
+		{max.x,max.y,max.z},//RT
+		{max.x,min.y,max.z},//RB
+	};
+
+	for (int i = 0; i < 4; i++) {
+		front[i] = Transform(Transform(front[i], viewProjectionMatrix), viewportMatrix);
+		back[i] = Transform(Transform(back[i], viewProjectionMatrix), viewportMatrix);
+		Novice::DrawLine((int)front[i].x, (int)front[i].y, (int)back[i].x, (int)back[i].y, color);
+	}
+	Novice::DrawLine((int)front[0].x, (int)front[0].y, (int)front[1].x, (int)front[1].y, color);
+	Novice::DrawLine((int)front[2].x, (int)front[2].y, (int)front[1].x, (int)front[1].y, color);
+	Novice::DrawLine((int)front[2].x, (int)front[2].y, (int)front[3].x, (int)front[3].y, color);
+	Novice::DrawLine((int)front[0].x, (int)front[0].y, (int)front[3].x, (int)front[3].y, color);
+
+	Novice::DrawLine((int)back[0].x, (int)back[0].y, (int)back[1].x, (int)back[1].y, color);
+	Novice::DrawLine((int)back[2].x, (int)back[2].y, (int)back[1].x, (int)back[1].y, color);
+	Novice::DrawLine((int)back[2].x, (int)back[2].y, (int)back[3].x, (int)back[3].y, color);
+	Novice::DrawLine((int)back[0].x, (int)back[0].y, (int)back[3].x, (int)back[3].y, color);
+
+}
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -330,6 +378,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{1.0f,0.0f,0.0f}
 		}
 	};
+	AABB aabb1{
+		.min{-0.5f,-0.5f,-0.5f},
+		.max{0.0f,0.0f,0.0f},
+	};
+	AABB aabb2{
+		.min{0.2f,0.2f,0.2f},
+		.max{1.0f,1.0f,1.0f},
+	};
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -359,10 +416,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Vector3 closestPoint = ClossPoint(point, segment);
 
 		Sphere pointSphere{ point,0.01f };
-		Sphere clossPointSphere{closestPoint,0.01f};
-
-		
-
+		Sphere clossPointSphere{closestPoint,0.01f};	
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.3f,0.0f,0.0f }, cameraTranslate);
 		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -370,7 +424,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
 		
+
+
 		ImGui::Begin("Window");
+
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
@@ -378,10 +435,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
 		//ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
 		//ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
-		ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
-		ImGui::DragFloat3("Triangle", &triangle.vertices[0].x, 0.01f);
-		
+		//ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
+		//ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
+		//ImGui::DragFloat3("Triangle", &triangle.vertices[0].x, 0.01f);
+		ImGui::DragFloat3("AABB1", &aabb1.min.x, 0.01f);
+		ImGui::DragFloat3("AABB1", &aabb1.max.x, 0.01f);
+		ImGui::DragFloat3("AABB2", &aabb2.min.x, 0.01f);
+		ImGui::DragFloat3("AABB2", &aabb2.max.x, 0.01f);
+
 
 		ImGui::End();
 
@@ -389,7 +450,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//2つの球の中心点間の距離を求める	
 		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		if (IsCollision(triangle,segment) == true) {
+		if (IsCollision(aabb1,aabb2) == true) {
 			color = RED;
 		}
 		else {
@@ -406,14 +467,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
-		DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
 		/*
 		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		*/
+		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
 		///
 		/// ↑描画処理ここまで
