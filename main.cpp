@@ -361,7 +361,30 @@ bool IsCollision(const AABB& aabb, const Sphere& sphere) {
 	}
 	return false;
 }
+bool IsCollision(const AABB& aabb, const Segment& segment) {
+	float Txmin = (aabb.min.x - segment.origin.x) / segment.diff.x;
+	float Txmax = (aabb.max.x - segment.origin.x) / segment.diff.x;
+	float Tymin = (aabb.min.y - segment.origin.y) / segment.diff.y;
+	float Tymax = (aabb.max.y - segment.origin.y) / segment.diff.y;
+	float Tzmin = (aabb.min.z - segment.origin.z) / segment.diff.z;
+	float Tzmax = (aabb.max.z - segment.origin.z) / segment.diff.z;
 
+	float tNearX = min(Txmin, Txmax);
+	float tNearY = min(Tymin, Tymax);
+	float tNearZ = min(Tzmin, Tzmax);
+
+	float tFarX = max(Txmin, Txmax);
+	float tFarY = max(Tymin, Tymax);
+	float tFarZ = max(Tzmin, Tzmax);
+	//AABBとの衝突点（貫通店）のｔが小さいほう
+	float tmin = max(max(tNearX, tNearY), tNearZ);
+	//AABBとの衝突点（貫通店）のｔが大きいほう
+	float tmax = min(min(tFarX, tFarY), tFarZ);
+	if (tmin <= tmax) {
+		return true;
+	}
+	return false;
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -377,7 +400,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 translate{ 0.0f,0.0f,0.0f };
 	Vector3 cameraTranslate{ 0.0f,1.9f,-6.49f };
 
-	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
+	Segment segment
+	{
+		.origin{-0.7f,0.3f,0.0f},
+		.diff{2.0f,-0.5f,0.0f} 
+	};
 	Vector3 point{ -1.5f,0.6f,0.6f };
 	/*float rot = 0.0f;*/
 
@@ -397,7 +424,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 	AABB aabb1{
 		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.0f,0.0f,0.0f},
+		.max{0.5f,0.5f,0.5f},
 	};
 	AABB aabb2{
 		.min{0.2f,0.2f,0.2f},
@@ -429,11 +456,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		//rotate.y += 0.05f;
 
-		Vector3 project = Projection(Vector3::Subtract(point, segment.origin), segment.diff);
+		/*Vector3 project = Projection(Vector3::Subtract(point, segment.origin), segment.diff);
 		Vector3 closestPoint = ClossPoint(point, segment);
 
 		Sphere pointSphere{ point,0.01f };
-		Sphere clossPointSphere{closestPoint,0.01f};	
+		Sphere clossPointSphere{closestPoint,0.01f};	*/
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.3f,0.0f,0.0f }, cameraTranslate);
 		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -447,13 +474,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		ImGui::DragFloat3("cameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
-		ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
-		ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
+		//ImGui::InputFloat3("Project", &project.x, "%.3f", ImGuiInputTextFlags_ReadOnly);
+		//ImGui::DragFloat3("sphere1", &sphere1.center.x, 0.01f);
 		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
 		//ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
 		//ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
-		//ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
-		//ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
+		ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
 		//ImGui::DragFloat3("Triangle", &triangle.vertices[0].x, 0.01f);
 		ImGui::DragFloat3("AABB1", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1", &aabb1.max.x, 0.01f);
@@ -467,7 +494,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//2つの球の中心点間の距離を求める	
 		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		if (IsCollision(aabb1,sphere1) == true) {
+		if (IsCollision(aabb1,segment) == true) {
 			color = RED;
 		}
 		else {
@@ -484,14 +511,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
-		//DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
+		DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
 		
 		/*DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		*/
 		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, color);
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
