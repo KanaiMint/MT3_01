@@ -392,7 +392,7 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 	const float t = 50;
 
 	 
-	for (int i = 1; i < t; i++) {
+	for (int i = 1; i <=t; i++) {
 
 		//制御点p0,p1を線形補間
 		Vector3 p0p1 = Vector3::Lerp(controlPoint0, controlPoint1, i/t);
@@ -437,9 +437,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int color = WHITE;
 
+	Vector3 controlPoint[3] = {
+		{-0.8f,0.58f,1.0f},
+		{-1.76f,1.0f,-0.3f},
+		{-0.94f,-0.7f,2.3f},
+	};
 
-	Sphere sphere1{ {0.0f,0.0f,0.0f},0.3f };
-	Sphere sphere2{ {0.0f,0.0f,0.0f},0.3f };
+	
 
 	Plane plane1{ {0.0f,1.0f,0.0f},0.1f };
 	Triangle triangle{
@@ -458,11 +462,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.max{1.0f,1.0f,1.0f},
 	};
 
-	Vector3 controlPoint[3] = {
-		{-0.8f,0.58f,1.0f},
-		{-1.76f,1.0f,-0.3f},
-		{-0.94f,-0.7f,2.3f},
-	};
+	
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -501,7 +501,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
 		
-
+		Sphere sphere1{ {controlPoint[0]},0.01f };
+		Sphere sphere2{ {controlPoint[1]},0.01f };
+		Sphere sphere3{ {controlPoint[2]},0.01f };
 
 		ImGui::Begin("Window");
 
@@ -530,13 +532,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//2つの球の中心点間の距離を求める	
 		//float distance = sphere1.center.Length( sphere2.center );
 		//半径の合計よりも短かったら衝突	
-		if (IsCollision(aabb1,segment) == true) {
+		/*if (IsCollision(aabb1,segment) == true) {
 			color = RED;
 		}
 		else {
 			color = WHITE;
-		}
-
+		}*/
+		color = WHITE;
 		
 		///
 		/// ↑更新処理ここまで
@@ -560,7 +562,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
 		
 		DrawBezier(controlPoint[0], controlPoint[1], controlPoint[2], worldViewProjectionMatrix, viewportMatrix, color);
-		
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		DrawSphere(sphere3, worldViewProjectionMatrix, viewportMatrix, BLACK);
+
 		///
 		/// ↑描画処理ここまで
 		///
