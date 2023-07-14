@@ -386,6 +386,33 @@ bool IsCollision(const AABB& aabb, const Segment& segment) {
 	return false;
 }
 
+void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2,
+	const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color)
+{
+	const float t = 50;
+
+	 
+	for (int i = 1; i < t; i++) {
+
+		//制御点p0,p1を線形補間
+		Vector3 p0p1 = Vector3::Lerp(controlPoint0, controlPoint1, i/t);
+		//制御点p1,p2を線形補間
+		Vector3 p1p2 = Vector3::Lerp(controlPoint1, controlPoint2, i/t);
+		//補間点p0p1,p1p2を線形補間
+		Vector3 p = Vector3::Lerp(p0p1, p1p2, i/t);
+
+		//制御点p0,p1を線形補間
+		Vector3 p0p1_ = Vector3::Lerp(controlPoint0, controlPoint1, (i-1)/t);
+		//制御点p1,p2を線形補間
+		Vector3 p1p2_ = Vector3::Lerp(controlPoint1, controlPoint2, (i-1)/t);
+		//補間点p0p1,p1p2を線形補間
+		Vector3 p_ = Vector3::Lerp(p0p1_, p1p2_, (i-1)/t);
+		Vector3 p_ndc= Transform(Transform(p, viewProjectionMatrix), viewportMatrix);
+		Vector3 p__ndc= Transform(Transform(p_, viewProjectionMatrix), viewportMatrix);
+
+		Novice::DrawLine((int)p_ndc.x, (int)p_ndc.y, (int)p__ndc.x, (int)p__ndc.y, color);
+	}
+}
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -429,6 +456,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	AABB aabb2{
 		.min{0.2f,0.2f,0.2f},
 		.max{1.0f,1.0f,1.0f},
+	};
+
+	Vector3 controlPoint[3] = {
+		{-0.8f,0.58f,1.0f},
+		{-1.76f,1.0f,-0.3f},
+		{-0.94f,-0.7f,2.3f},
 	};
 
 	// ウィンドウの×ボタンが押されるまでループ
@@ -479,13 +512,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//ImGui::DragFloat3("sphere2", &sphere2.center.x, 0.01f);
 		//ImGui::DragFloat("Plane", &plane1.distance, 0.01f);
 		//ImGui::DragFloat3("Plane", &plane1.normal.x, 0.01f);
-		ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
+		//ImGui::DragFloat3("Segment", &segment.origin.x, 0.01f);
+		//ImGui::DragFloat3("Segment", &segment.diff.x, 0.01f);
 		//ImGui::DragFloat3("Triangle", &triangle.vertices[0].x, 0.01f);
-		ImGui::DragFloat3("AABB1", &aabb1.min.x, 0.01f);
-		ImGui::DragFloat3("AABB1", &aabb1.max.x, 0.01f);
+		//ImGui::DragFloat3("AABB1", &aabb1.min.x, 0.01f);
+		//ImGui::DragFloat3("AABB1", &aabb1.max.x, 0.01f);
 		//ImGui::DragFloat3("AABB2", &aabb2.min.x, 0.01f);
 		//ImGui::DragFloat3("AABB2", &aabb2.max.x, 0.01f);
+		ImGui::DragFloat3("Bezier_control[0]", &controlPoint[0].x, 0.01f);
+		ImGui::DragFloat3("Bezier_control[1]", &controlPoint[1].x, 0.01f);
+		ImGui::DragFloat3("Bezier_control[2]", &controlPoint[2].x, 0.01f);
 
 
 		ImGui::End();
@@ -511,17 +547,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 
-		DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
 		
 		/*DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
 		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		*/
-		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, color);
+		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
+		
+		DrawBezier(controlPoint[0], controlPoint[1], controlPoint[2], worldViewProjectionMatrix, viewportMatrix, color);
+		
 		///
 		/// ↑描画処理ここまで
 		///

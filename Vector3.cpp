@@ -71,3 +71,11 @@ void VecScreenPrintf(int x, int y, const Vector3& vector, const char* label)
 	Novice::ScreenPrintf(x + kColumWidth * 2, y, "%0.2f", vector.z);
 	Novice::ScreenPrintf(x + kColumWidth * 3, y, "%s", label);
 }
+
+Vector3 Vector3::Lerp(const Vector3& v1, const Vector3& v2, float t) {
+
+	Vector3 tmp;
+	tmp = Vector3::Add(v1, Vector3::Multiply(t, (Vector3::Subtract(v2, v1))));
+
+	return tmp;
+}
