@@ -413,6 +413,9 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 		Novice::DrawLine((int)p_ndc.x, (int)p_ndc.y, (int)p__ndc.x, (int)p__ndc.y, color);
 	}
 }
+
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -462,8 +465,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.max{1.0f,1.0f,1.0f},
 	};
 
-	
-
+	Vector3 translates[3] = {
+		{0.2f,1.0f,0.0f},
+		{0.4f,0.0f,0.0f},
+		{0.3f,0.0f,0.0f},
+	};
+	Vector3 rotates[3] = {
+		{0.0f,1.0f,-6.8f},
+		{0.0f,0.0f,-1.4f},
+		{0.0f,0.0f,0.0f},
+	};
+	Vector3 scales[3] = {
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
+	};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -488,12 +504,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			translate.x -= 0.1f;
 		}
 		//rotate.y += 0.05f;
-
 		/*Vector3 project = Projection(Vector3::Subtract(point, segment.origin), segment.diff);
 		Vector3 closestPoint = ClossPoint(point, segment);
-
 		Sphere pointSphere{ point,0.01f };
 		Sphere clossPointSphere{closestPoint,0.01f};	*/
+
+		
 		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.3f,0.0f,0.0f }, cameraTranslate);
 		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
@@ -501,9 +517,33 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
 		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
 		
-		Sphere sphere1{ {controlPoint[0]},0.01f };
-		Sphere sphere2{ {controlPoint[1]},0.01f };
-		Sphere sphere3{ {controlPoint[2]},0.01f };
+		//肩
+		Matrix4x4 sholderMatrix = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
+		//肘
+		Matrix4x4 elbowMatrix = MakeAffineMatrix(scales[1], rotates[1], translates[1]);
+		//手
+		Matrix4x4 handMatrix = MakeAffineMatrix(scales[2], rotates[2], translates[2]);
+
+		//階層構造変換
+		Matrix4x4 L_sholderMatrix = sholderMatrix;
+		Matrix4x4 L_elbowMatrix = Multiply( elbowMatrix,L_sholderMatrix );
+		Matrix4x4 L_handMatrix = Multiply(handMatrix, L_elbowMatrix);
+		//変換後にビュープロジェクション作成
+		Matrix4x4 L_sholder_ViewProjectionMatrix = Multiply(L_sholderMatrix, Multiply(viewMatrix, projectionMatrix));
+		Matrix4x4 L_elbow_ViewProjectionMatrix = Multiply(L_elbowMatrix, Multiply(viewMatrix, projectionMatrix));
+			
+		//NDC
+		Vector3 sholder_tmp = Vector3(L_sholderMatrix.m[3][0], L_sholderMatrix.m[3][1], L_sholderMatrix.m[3][2]);
+		Vector3 elbow_tmp = Vector3(L_elbowMatrix.m[3][0], L_elbowMatrix.m[3][1], L_elbowMatrix.m[3][2]);
+		Vector3 hand_tmp = Vector3(L_handMatrix.m[3][0], L_handMatrix.m[3][1], L_handMatrix.m[3][2]);
+
+		Vector3 L_NDC_sholder = Transform(Transform(sholder_tmp, worldViewProjectionMatrix), viewportMatrix);
+		Vector3 L_NDC_elbow = Transform(Transform(elbow_tmp, worldViewProjectionMatrix), viewportMatrix);
+		Vector3 L_NDC_hand = Transform(Transform(hand_tmp, worldViewProjectionMatrix), viewportMatrix);
+
+		Sphere sphere1{ {sholder_tmp},0.1f };
+		Sphere sphere2{ {elbow_tmp},0.1f };
+		Sphere sphere3{ {hand_tmp},0.1f };
 
 		ImGui::Begin("Window");
 
@@ -521,9 +561,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//ImGui::DragFloat3("AABB1", &aabb1.max.x, 0.01f);
 		//ImGui::DragFloat3("AABB2", &aabb2.min.x, 0.01f);
 		//ImGui::DragFloat3("AABB2", &aabb2.max.x, 0.01f);
-		ImGui::DragFloat3("Bezier_control[0]", &controlPoint[0].x, 0.01f);
-		ImGui::DragFloat3("Bezier_control[1]", &controlPoint[1].x, 0.01f);
-		ImGui::DragFloat3("Bezier_control[2]", &controlPoint[2].x, 0.01f);
+		//ImGui::DragFloat3("Bezier_control[0]", &controlPoint[0].x, 0.01f);
+		//ImGui::DragFloat3("Bezier_control[1]", &controlPoint[1].x, 0.01f);
+		//ImGui::DragFloat3("Bezier_control[2]", &controlPoint[2].x, 0.01f);
+		ImGui::DragFloat3("sholder_translate", &translates[0].x, 0.01f);
+		ImGui::DragFloat3("sholder_rotate", &rotates[0].x, 0.01f);
+		ImGui::DragFloat3("elbow_translate", &translates[1].x, 0.01f);
+		ImGui::DragFloat3("elbow_rotate", &rotates[1].x, 0.01f);
+		ImGui::DragFloat3("hand_translate", &translates[2].x, 0.01f);
+		ImGui::DragFloat3("hand_rotate", &rotates[2].x, 0.01f);
 
 
 		ImGui::End();
@@ -548,12 +594,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-
-		//DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);
-		
+		//DrawLine(segment, worldViewProjectionMatrix, viewportMatrix, color);		
 		/*DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
-		*/
+		DrawSphere(clossPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);		*/
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, color);
@@ -561,11 +604,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, color);
 		//DrawPlane(plane1, worldViewProjectionMatrix, viewportMatrix, color);
 		
-		DrawBezier(controlPoint[0], controlPoint[1], controlPoint[2], worldViewProjectionMatrix, viewportMatrix, color);
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, BLACK);
-		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, BLACK);
-		DrawSphere(sphere3, worldViewProjectionMatrix, viewportMatrix, BLACK);
+		//DrawBezier(controlPoint[0], controlPoint[1], controlPoint[2], worldViewProjectionMatrix, viewportMatrix, color);
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, BLUE);
+		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, RED);
+		DrawSphere(sphere3, worldViewProjectionMatrix, viewportMatrix, GREEN);
 
+		Novice::DrawLine((int)L_NDC_sholder.x, (int)L_NDC_sholder.y, (int)L_NDC_elbow.x, (int)L_NDC_elbow.y, color);
+		Novice::DrawLine((int)L_NDC_elbow.x, (int)L_NDC_elbow.y, (int)L_NDC_hand.x, (int)L_NDC_hand.y, color);
+		//Novice::DrawLine(L_NDC_sholder.x, L_NDC_sholder.y, L_NDC_elbow.x, L_NDC_elbow.y, color);
 		///
 		/// ↑描画処理ここまで
 		///
