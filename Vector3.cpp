@@ -72,6 +72,16 @@ void VecScreenPrintf(int x, int y, const Vector3& vector, const char* label)
 	Novice::ScreenPrintf(x + kColumWidth * 3, y, "%s", label);
 }
 
+Vector3 operator*(float s, const Vector3& vec)
+{
+	{ return { Vector3::Multiply(s, vec) }; }
+}
+
+Vector3 operator*(const Vector3& vec, float s)
+{
+	{ return {s * vec}; }
+}
+
 Vector3 Vector3::Lerp(const Vector3& v1, const Vector3& v2, float t) {
 
 	Vector3 tmp;
