@@ -448,7 +448,14 @@ void DrawBall(const Ball& ball, const Matrix4x4& viewProjectionMatrix, const Mat
 	DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, ball.color);
 }
 
-
+struct Pendulum
+{
+	Vector3 anchor;//アンカーポイント
+	float length;//紐の長さ
+	float angle;//現在の角度
+	float angularVelocity;//角速度ω
+	float angularAcceleration;//角加速度
+};
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -486,6 +493,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float anglelarVelocty = 3.14f;
 	float angle = 0.0f;
 	float radius = 0.8f;
+
+	Pendulum pendulum;
+	pendulum.anchor = { 0.0f,1.0f,0.0f };
+	pendulum.length = 0.8f;
+	pendulum.angle = 0.7f;
+	pendulum.angularVelocity = 0.8f;
+	pendulum.angularAcceleration = 0.0f;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -578,7 +592,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		*/
 #pragma endregion
 
-		
+#pragma region 円角速度
+
 		//float omega = angle / 60.0f;
 		angle += anglelarVelocty * deltaTime;
 		//Vector3 acce = { float(-pow((omega),2) * radius * cos(angle)), float( - pow((omega),2) * radius * sin(angle)),0};
@@ -588,7 +603,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ball.position.z = center.z;
 		//ball.position = Vector3::Add(ball.position, acce);
 		//ball.position = acce;
+#pragma endregion
 
+		pendulum.angularAcceleration =
+			-(9.8f / pendulum.length) * std::sin(pendulum.angle);
+		pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+		pendulum.angle += pendulum.angularVelocity * deltaTime;
+
+		//pは振り子の先端の位置
+		
+		ball.position.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
+		ball.position.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
+		ball.position.z = pendulum.anchor.z;
 
 		ImGui::Begin("Window");
 
@@ -596,8 +622,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		if (ImGui::Button("Start")) {
 		
-			ball.position = { 0.8f,0,0 };
-			angle = 0.0f;
+			pendulum.anchor = { 0.0f,1.0f,0.0f };
+			pendulum.length = 0.8f;
+			pendulum.angle = 0.7f;
+			pendulum.angularVelocity = 0.8f;
+			pendulum.angularAcceleration = 0.0f;
 		}
 
 		ImGui::End();
@@ -622,7 +651,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		//DrawLine(ball.position, spring.anchor, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawLine(ball.position, pendulum.anchor, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawBall(ball, worldViewProjectionMatrix, viewportMatrix);
 		
 		///
