@@ -446,9 +446,10 @@ void DrawBall(const Ball& ball, const Matrix4x4& viewProjectionMatrix, const Mat
 	sphere.radius = ball.radius;
 
 	DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, ball.color);
-
-
 }
+
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -461,69 +462,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 rotate{ 0.26f,0.0f,0.0f };
 	Vector3 translate{ 0.0f,0.0f,0.0f };
-	Vector3 cameraTranslate{ 0.0f,1.9f,-6.49f };
-
-	Segment segment
-	{
-		.origin{-0.7f,0.3f,0.0f},
-		.diff{2.0f,-0.5f,0.0f}
-	};
-	Vector3 point{ -1.5f,0.6f,0.6f };
-	/*float rot = 0.0f;*/
+	Vector3 cameraTranslate{ 0.0f,1.9f,-6.49f };		
 
 	int color = WHITE;
 
-	Vector3 controlPoint[3] = {
-		{-0.8f,0.58f,1.0f},
-		{-1.76f,1.0f,-0.3f},
-		{-0.94f,-0.7f,2.3f},
-	};
-
-	Plane plane1{ {0.0f,1.0f,0.0f},0.1f };
-	Triangle triangle{
-		{
-		{-1.0f,0.0f,0.0f},
-		{0.0f,1.0f,0.0f},
-		{1.0f,0.0f,0.0f}
-		}
-	};
-	AABB aabb1{
-		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.5f,0.5f,0.5f},
-	};
-	AABB aabb2{
-		.min{0.2f,0.2f,0.2f},
-		.max{1.0f,1.0f,1.0f},
-	};
-
-	Vector3 translates[3] = {
-		{0.2f,1.0f,0.0f},
-		{0.4f,0.0f,0.0f},
-		{0.3f,0.0f,0.0f},
-	};
-	Vector3 rotates[3] = {
-		{0.0f,1.0f,-6.8f},
-		{0.0f,0.0f,-1.4f},
-		{0.0f,0.0f,0.0f},
-	};
-	Vector3 scales[3] = {
-		{1.0f,1.0f,1.0f},
-		{1.0f,1.0f,1.0f},
-		{1.0f,1.0f,1.0f},
-	};
-
-	Vector3 a{ 0.2f,1.0f,0.0f };
-	Vector3 b{ 2.4f,3.1f,1.2f };
-	Vector3 c = a + b;
-	Vector3 d = a - b;
-	Vector3 e = a * 2.4f;
-	Vector3 rotate_(0.4f, 1.43f, -0.8f);
-
-	Matrix4x4  rotateXMatrix = MakeRotateXMatrix(rotate_.x);
-	Matrix4x4  rotateYMatrix = MakeRotateYMatrix(rotate_.y);
-	Matrix4x4  rotateZMatrix = MakeRotateZMatrix(rotate_.z);
-	Matrix4x4 rotateMatrix = rotateXMatrix * rotateYMatrix * rotateZMatrix;
-
+	
 	Spring spring{};
 	spring.anchor = { 0.0f,0.0f,0.0f };
 	spring.naturalLength = 1.0f;
@@ -538,7 +481,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	float deltaTime = 1.0f/60.0f;
 
+	Vector3 acceleration = {};
 	
+	float anglelarVelocty = 3.14f;
+	float angle = 0.0f;
+	float radius = 0.8f;
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -614,7 +562,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region ばね
 		
-			Vector3 diff = ball.position - spring.anchor;
+		/*	Vector3 diff = ball.position - spring.anchor;
 			float length = Vector3::Length(diff);
 			if (length != 0.0f) {
 				Vector3 direction = Vector3::Normalize(diff);
@@ -627,8 +575,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			ball.veloctity = Vector3::Add(ball.veloctity, (ball.cceleration * deltaTime));
 			ball.position = Vector3::Add(ball.position, (ball.veloctity * deltaTime));
-		
+		*/
 #pragma endregion
+
+		
+		//float omega = angle / deltaTime;
+		angle += anglelarVelocty * deltaTime;
+		//Vector3 a = { -pow((omega),2)*radius * cos(angle),radius * sin(angle)),0 }
+		Vector3 center = { 0,0,0 };
+		ball.position.x = center.x + std::cos(angle) * radius;
+		ball.position.y = center.y + std::sin(angle) * radius;
+		ball.position.z = center.z;
+
 
 
 		ImGui::Begin("Window");
@@ -637,16 +595,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		if (ImGui::Button("Start")) {
 		
-			spring.anchor = { 0.0f,0.0f,0.0f };
-			spring.naturalLength = 1.0f;
-			spring.stiffness = 100.0f;
-			spring.dampingCoefficient = 2.0f;
-
-			
-			ball.position = { 1.2f,0.0f,0.0f };
-			ball.mass = 2.0f;
-			ball.radius = 0.05f;
-			ball.color = BLUE;
+			ball.position = { 0.8f,0,0 };
+			angle = 0.0f;
 		}
 
 		ImGui::End();
@@ -671,7 +621,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawLine(ball.position, spring.anchor, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		//DrawLine(ball.position, spring.anchor, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawBall(ball, worldViewProjectionMatrix, viewportMatrix);
 		
 		///
