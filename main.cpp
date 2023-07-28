@@ -579,14 +579,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 		
-		//float omega = angle / deltaTime;
+		//float omega = angle / 60.0f;
 		angle += anglelarVelocty * deltaTime;
-		//Vector3 a = { -pow((omega),2)*radius * cos(angle),radius * sin(angle)),0 }
+		//Vector3 acce = { float(-pow((omega),2) * radius * cos(angle)), float( - pow((omega),2) * radius * sin(angle)),0};
 		Vector3 center = { 0,0,0 };
 		ball.position.x = center.x + std::cos(angle) * radius;
 		ball.position.y = center.y + std::sin(angle) * radius;
 		ball.position.z = center.z;
-
+		//ball.position = Vector3::Add(ball.position, acce);
+		//ball.position = acce;
 
 
 		ImGui::Begin("Window");
