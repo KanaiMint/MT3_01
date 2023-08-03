@@ -457,6 +457,13 @@ struct Pendulum
 	float angularAcceleration;//角加速度
 };
 
+struct ConicalPendulum {
+	Vector3 anchor; //アンカーポイント	
+	float length;	//紐の長さ
+	float harfApexAngle;	//円錐の頂角の半分
+	float angle;	//現在の角度
+	float angularVelocity;	//角速度ω
+};
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -474,11 +481,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int color = WHITE;
 
 	
-	Spring spring{};
+	/*Spring spring{};
 	spring.anchor = { 0.0f,0.0f,0.0f };
 	spring.naturalLength = 1.0f;
 	spring.stiffness = 100.0f;
-	spring.dampingCoefficient = 2.0f;
+	spring.dampingCoefficient = 2.0f;*/
 
 	Ball ball{};
 	ball.position = { 1.2f,0.0f,0.0f };
@@ -490,9 +497,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 acceleration = {};
 	
-	float anglelarVelocty = 3.14f;
-	float angle = 0.0f;
-	float radius = 0.8f;
+	/*float anglelarVelocty = 3.14f;
+	float angle = 0.0f;*/
+	//float radius = 0.8f;
 
 	Pendulum pendulum;
 	pendulum.anchor = { 0.0f,1.0f,0.0f };
@@ -500,6 +507,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	pendulum.angle = 0.7f;
 	pendulum.angularVelocity = 0.8f;
 	pendulum.angularAcceleration = 0.0f;
+
+	ConicalPendulum conicalPendulun;
+	conicalPendulun.anchor = { 0.0f,1.0f,0.0f };
+	conicalPendulun.length = 0.8f;
+	conicalPendulun.harfApexAngle = 0.7f;
+	conicalPendulun.angle = 0.0f;
+	conicalPendulun.angularVelocity = 0.0f;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -595,26 +609,36 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region 円角速度
 
 		//float omega = angle / 60.0f;
-		angle += anglelarVelocty * deltaTime;
+		//angle += anglelarVelocty * deltaTime;
 		//Vector3 acce = { float(-pow((omega),2) * radius * cos(angle)), float( - pow((omega),2) * radius * sin(angle)),0};
-		Vector3 center = { 0,0,0 };
-		ball.position.x = center.x + std::cos(angle) * radius;
-		ball.position.y = center.y + std::sin(angle) * radius;
-		ball.position.z = center.z;
+		//Vector3 center = { 0,0,0 };
+		//ball.position.x = center.x + std::cos(angle) * radius;
+		//ball.position.y = center.y + std::sin(angle) * radius;
+		//ball.position.z = center.z;
 		//ball.position = Vector3::Add(ball.position, acce);
 		//ball.position = acce;
 #pragma endregion
 
-		pendulum.angularAcceleration =
-			-(9.8f / pendulum.length) * std::sin(pendulum.angle);
-		pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
-		pendulum.angle += pendulum.angularVelocity * deltaTime;
+#pragma region 振り子
+		//pendulum.angularAcceleration =
+		//	-(9.8f / pendulum.length) * std::sin(pendulum.angle);
+		//pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+		//pendulum.angle += pendulum.angularVelocity * deltaTime;
 
-		//pは振り子の先端の位置
-		
-		ball.position.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
-		ball.position.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
-		ball.position.z = pendulum.anchor.z;
+		////pは振り子の先端の位置
+
+		//ball.position.x = pendulum.anchor.x + std::sin(pendulum.angle) * pendulum.length;
+		//ball.position.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
+		//ball.position.z = pendulum.anchor.z;
+#pragma endregion
+
+		conicalPendulun.angularVelocity = std::sqrt(9.8f / (conicalPendulun.length * std::cos(conicalPendulun.harfApexAngle)));
+		conicalPendulun.angle += conicalPendulun.angularVelocity*deltaTime;
+		float radius = std::sin(conicalPendulun.harfApexAngle) * conicalPendulun.length;
+		float height = std::cos(conicalPendulun.harfApexAngle) * conicalPendulun.length;
+		ball.position.x = conicalPendulun.anchor.x + std::cos(conicalPendulun.angle) * radius;
+		ball.position.y = conicalPendulun.anchor.y - height;
+		ball.position.z = conicalPendulun.anchor.z - std::sin(conicalPendulun.angle) * radius;
 
 		ImGui::Begin("Window");
 
@@ -651,7 +675,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawLine(ball.position, pendulum.anchor, worldViewProjectionMatrix, viewportMatrix, WHITE);
+		DrawLine(conicalPendulun.anchor, ball.position, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawBall(ball, worldViewProjectionMatrix, viewportMatrix);
 		
 		///
