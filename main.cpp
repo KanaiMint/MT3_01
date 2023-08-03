@@ -123,7 +123,7 @@ struct Plane {
 	float distance;//距離
 };
 
-bool Iscollision(const Sphere& sphere, const Plane& plane) {
+bool IsCollision(const Sphere& sphere, const Plane& plane) {
 
 
 	float k = Vector3::Dot(plane.normal, sphere.center) - plane.distance;
@@ -433,7 +433,7 @@ struct Spring {
 struct Ball {
 	Vector3 position;//ボールの位置
 	Vector3 veloctity;//ボールの速度
-	Vector3 cceleration;//ボールの加速度
+	Vector3 acceleration;//ボールの加速度
 	float mass;//ボースの質量
 	float radius;//ボールの半径
 	unsigned int color;//ボールの色
@@ -446,6 +446,18 @@ void DrawBall(const Ball& ball, const Matrix4x4& viewProjectionMatrix, const Mat
 	sphere.radius = ball.radius;
 
 	DrawSphere(sphere, viewProjectionMatrix, viewportMatrix, ball.color);
+}
+bool IsCollision(const Ball& ball, const Plane& plane) {
+
+
+	float k = Vector3::Dot(plane.normal, ball.position) - plane.distance;
+
+	if (std::abs(k) <= ball.radius) {
+		return true;
+	}
+	return false;
+
+	//k=N・spherecenter-d;
 }
 
 struct Pendulum
@@ -488,10 +500,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	spring.dampingCoefficient = 2.0f;*/
 
 	Ball ball{};
-	ball.position = { 1.2f,0.0f,0.0f };
+	ball.position = { 0.8f,1.2f,0.3f };
 	ball.mass = 2.0f;
 	ball.radius = 0.05f;
-	ball.color = BLUE;
+	ball.color = WHITE;
 
 	float deltaTime = 1.0f/60.0f;
 
@@ -501,7 +513,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float angle = 0.0f;*/
 	//float radius = 0.8f;
 
-	Pendulum pendulum;
+	/*Pendulum pendulum;
 	pendulum.anchor = { 0.0f,1.0f,0.0f };
 	pendulum.length = 0.8f;
 	pendulum.angle = 0.7f;
@@ -513,7 +525,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	conicalPendulun.length = 0.8f;
 	conicalPendulun.harfApexAngle = 0.7f;
 	conicalPendulun.angle = 0.0f;
-	conicalPendulun.angularVelocity = 0.0f;
+	conicalPendulun.angularVelocity = 0.0f;*/
+
+	Plane plane;
+	plane.normal = Vector3::Normalize({ -0.2f,0.9f,-0.3f });
+	plane.distance = 0.0f;
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -549,47 +565,47 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		Sphere clossPointSphere{closestPoint,0.01f};	*/
 
 
-		Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
-		Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.3f,0.0f,0.0f }, cameraTranslate);
-		Matrix4x4 viewMatrix = Inverse(cameraMatrix);
-		Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(1280) / float(720), 0.1f, 100.0f);
-		Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
-		Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
+Matrix4x4 worldMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
+Matrix4x4 cameraMatrix = MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.3f,0.0f,0.0f }, cameraTranslate);
+Matrix4x4 viewMatrix = Inverse(cameraMatrix);
+Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(1280) / float(720), 0.1f, 100.0f);
+Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMatrix, projectionMatrix));
+Matrix4x4 viewportMatrix = MakeViewportMatrix(0, 0, float(1280), float(720), 0.0f, 1.0f);
 #pragma region 階層構造
 
 
 
-		////肩
-		//Matrix4x4 sholderMatrix = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
-		////肘
-		//Matrix4x4 elbowMatrix = MakeAffineMatrix(scales[1], rotates[1], translates[1]);
-		////手
-		//Matrix4x4 handMatrix = MakeAffineMatrix(scales[2], rotates[2], translates[2]);
+////肩
+//Matrix4x4 sholderMatrix = MakeAffineMatrix(scales[0], rotates[0], translates[0]);
+////肘
+//Matrix4x4 elbowMatrix = MakeAffineMatrix(scales[1], rotates[1], translates[1]);
+////手
+//Matrix4x4 handMatrix = MakeAffineMatrix(scales[2], rotates[2], translates[2]);
 
-		////階層構造変換
-		//Matrix4x4 L_sholderMatrix = sholderMatrix;
-		//Matrix4x4 L_elbowMatrix = Multiply( elbowMatrix,L_sholderMatrix );
-		//Matrix4x4 L_handMatrix = Multiply(handMatrix, L_elbowMatrix);
-		////変換後にビュープロジェクション作成
-		//Matrix4x4 L_sholder_ViewProjectionMatrix = Multiply(L_sholderMatrix, Multiply(viewMatrix, projectionMatrix));
-		//Matrix4x4 L_elbow_ViewProjectionMatrix = Multiply(L_elbowMatrix, Multiply(viewMatrix, projectionMatrix));
-		//	
-		////NDC
-		//Vector3 sholder_tmp = Vector3(L_sholderMatrix.m[3][0], L_sholderMatrix.m[3][1], L_sholderMatrix.m[3][2]);
-		//Vector3 elbow_tmp = Vector3(L_elbowMatrix.m[3][0], L_elbowMatrix.m[3][1], L_elbowMatrix.m[3][2]);
-		//Vector3 hand_tmp = Vector3(L_handMatrix.m[3][0], L_handMatrix.m[3][1], L_handMatrix.m[3][2]);
+////階層構造変換
+//Matrix4x4 L_sholderMatrix = sholderMatrix;
+//Matrix4x4 L_elbowMatrix = Multiply( elbowMatrix,L_sholderMatrix );
+//Matrix4x4 L_handMatrix = Multiply(handMatrix, L_elbowMatrix);
+////変換後にビュープロジェクション作成
+//Matrix4x4 L_sholder_ViewProjectionMatrix = Multiply(L_sholderMatrix, Multiply(viewMatrix, projectionMatrix));
+//Matrix4x4 L_elbow_ViewProjectionMatrix = Multiply(L_elbowMatrix, Multiply(viewMatrix, projectionMatrix));
+//	
+////NDC
+//Vector3 sholder_tmp = Vector3(L_sholderMatrix.m[3][0], L_sholderMatrix.m[3][1], L_sholderMatrix.m[3][2]);
+//Vector3 elbow_tmp = Vector3(L_elbowMatrix.m[3][0], L_elbowMatrix.m[3][1], L_elbowMatrix.m[3][2]);
+//Vector3 hand_tmp = Vector3(L_handMatrix.m[3][0], L_handMatrix.m[3][1], L_handMatrix.m[3][2]);
 
-		//Vector3 L_NDC_sholder = Transform(Transform(sholder_tmp, worldViewProjectionMatrix), viewportMatrix);
-		//Vector3 L_NDC_elbow = Transform(Transform(elbow_tmp, worldViewProjectionMatrix), viewportMatrix);
-		//Vector3 L_NDC_hand = Transform(Transform(hand_tmp, worldViewProjectionMatrix), viewportMatrix);
+//Vector3 L_NDC_sholder = Transform(Transform(sholder_tmp, worldViewProjectionMatrix), viewportMatrix);
+//Vector3 L_NDC_elbow = Transform(Transform(elbow_tmp, worldViewProjectionMatrix), viewportMatrix);
+//Vector3 L_NDC_hand = Transform(Transform(hand_tmp, worldViewProjectionMatrix), viewportMatrix);
 
-		//Sphere sphere1{ {sholder_tmp},0.1f };
-		//Sphere sphere2{ {elbow_tmp},0.1f };
-		//Sphere sphere3{ {hand_tmp},0.1f };
+//Sphere sphere1{ {sholder_tmp},0.1f };
+//Sphere sphere2{ {elbow_tmp},0.1f };
+//Sphere sphere3{ {hand_tmp},0.1f };
 #pragma endregion
 
 #pragma region ばね
-		
+
 		/*	Vector3 diff = ball.position - spring.anchor;
 			float length = Vector3::Length(diff);
 			if (length != 0.0f) {
@@ -631,14 +647,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//ball.position.y = pendulum.anchor.y - std::cos(pendulum.angle) * pendulum.length;
 		//ball.position.z = pendulum.anchor.z;
 #pragma endregion
+#pragma region 円錐
 
-		conicalPendulun.angularVelocity = std::sqrt(9.8f / (conicalPendulun.length * std::cos(conicalPendulun.harfApexAngle)));
+
+		/*conicalPendulun.angularVelocity = std::sqrt(9.8f / (conicalPendulun.length * std::cos(conicalPendulun.harfApexAngle)));
 		conicalPendulun.angle += conicalPendulun.angularVelocity*deltaTime;
 		float radius = std::sin(conicalPendulun.harfApexAngle) * conicalPendulun.length;
 		float height = std::cos(conicalPendulun.harfApexAngle) * conicalPendulun.length;
 		ball.position.x = conicalPendulun.anchor.x + std::cos(conicalPendulun.angle) * radius;
 		ball.position.y = conicalPendulun.anchor.y - height;
-		ball.position.z = conicalPendulun.anchor.z - std::sin(conicalPendulun.angle) * radius;
+		ball.position.z = conicalPendulun.anchor.z - std::sin(conicalPendulun.angle) * radius;*/
+
+#pragma endregion
+
+ball.acceleration = { 0.0f,-9.8f,0.0f };
+ball.veloctity = Vector3::Add(ball.veloctity , ball.acceleration * deltaTime) ;
+ball.position = Vector3::Add(ball.position , ball.veloctity * deltaTime) ;
+
+if (IsCollision(ball, plane)) {
+	ball.veloctity = Vector3::Reflect(ball.veloctity, plane.normal) * 0.8f;
+
+}
 
 		ImGui::Begin("Window");
 
@@ -646,11 +675,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		if (ImGui::Button("Start")) {
 		
-			conicalPendulun.anchor = { 0.0f,1.0f,0.0f };
-			conicalPendulun.length = 0.8f;
-			conicalPendulun.harfApexAngle = 0.7f;
-			conicalPendulun.angle = 0.0f;
-			conicalPendulun.angularVelocity = 0.0f; 
+			
 		}
 
 		ImGui::End();
@@ -675,8 +700,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawLine(conicalPendulun.anchor, ball.position, worldViewProjectionMatrix, viewportMatrix, WHITE);
 		DrawBall(ball, worldViewProjectionMatrix, viewportMatrix);
+		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,WHITE);
 		
 		///
 		/// ↑描画処理ここまで

@@ -89,3 +89,10 @@ Vector3 Vector3::Lerp(const Vector3& v1, const Vector3& v2, float t) {
 
 	return tmp;
 }
+
+Vector3 Vector3::Reflect(const Vector3& input, const Vector3& normal)
+{
+	Vector3 r;
+	r = Subtract( input , 2 * (Dot(input, normal) * normal));
+	return Vector3(r);
+}
