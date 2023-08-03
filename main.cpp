@@ -646,11 +646,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("cameraRotate", &rotate.x, 0.01f);
 		if (ImGui::Button("Start")) {
 		
-			pendulum.anchor = { 0.0f,1.0f,0.0f };
-			pendulum.length = 0.8f;
-			pendulum.angle = 0.7f;
-			pendulum.angularVelocity = 0.8f;
-			pendulum.angularAcceleration = 0.0f;
+			conicalPendulun.anchor = { 0.0f,1.0f,0.0f };
+			conicalPendulun.length = 0.8f;
+			conicalPendulun.harfApexAngle = 0.7f;
+			conicalPendulun.angle = 0.0f;
+			conicalPendulun.angularVelocity = 0.0f;
 		}
 
 		ImGui::End();
