@@ -650,7 +650,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			conicalPendulun.length = 0.8f;
 			conicalPendulun.harfApexAngle = 0.7f;
 			conicalPendulun.angle = 0.0f;
-			conicalPendulun.angularVelocity = 0.0f;
+			conicalPendulun.angularVelocity = 0.0f; 
 		}
 
 		ImGui::End();
